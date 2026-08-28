@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rydo</title>
+</head>
+
+<body>
+  <h1>🚗 Rydo</h1>
+  <p>Your ride, your way.</p>
+
+  <button onclick="requestRide()">Request a Ride</button>
+
+  <p id="message"></p>
+
+  <script>
+    function requestRide() {
+      document.getElementById("message").textContent =
+        "Ride requested successfully!";
+    }
+  </script>
+</body>
+</html>
