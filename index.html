@@ -22,6 +22,53 @@ function viewRideRequests() {
     alert("No ride requests yet.");
   }
 }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rydo</title>
+</head>
+
+<body>
+  <h1>🚗 Rydo</h1>
+  <p>Your ride, your way.</p>
+
+  <button onclick="requestRide()">Request a Ride</button>
+
+  <p id="message"></p>
+
+  <h2>Driver</h2>
+
+  <button onclick="alert('Driver is now online!')">
+    Go Online
+  </button>
+
+  <button onclick="viewRideRequests()">
+    View Ride Requests
+  </button>
+
+  <script>
+    function requestRide() {
+      document.getElementById("message").textContent =
+        "Ride requested successfully!";
+
+      localStorage.setItem("rydoRideRequested", "yes");
+    }
+
+    function viewRideRequests() {
+      const requested = localStorage.getItem("rydoRideRequested");
+
+      if (requested === "yes") {
+        alert("🚗 New Rydo ride request!");
+      } else {
+        alert("No ride requests yet.");
+      }
+    }
+  </script>
+
+</body>
+</html>
   <script>
     function requestRide() {
       document.getElementById("message").textContent =
