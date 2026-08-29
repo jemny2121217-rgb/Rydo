@@ -13,7 +13,15 @@
   <button onclick="requestRide()">Request a Ride</button>
 
   <p id="message"></p>
+function viewRideRequests() {
+  const requested = localStorage.getItem("rydoRideRequested");
 
+  if (requested === "yes") {
+    alert("🚗 New Rydo ride request!");
+  } else {
+    alert("No ride requests yet.");
+  }
+}
   <script>
     function requestRide() {
       document.getElementById("message").textContent =
