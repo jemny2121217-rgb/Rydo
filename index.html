@@ -934,6 +934,21 @@ document.getElementById("profileMessage")
 showPage("passenger");
 
 </script>
+<!-- your existing code -->
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const supabaseUrl = "https://pdfgqlvovmyzhdnumypq.supabase.co";
+const supabaseKey = "YOUR_PUBLISHABLE_KEY";
+
+const supabaseClient = supabase.createClient(
+  supabaseUrl,
+  supabaseKey
+);
+</script>
+
+</body>
+</html>
 </body>
   </html>
