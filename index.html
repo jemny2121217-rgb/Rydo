@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>Rydo — Safe rides. Simple booking.</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+body{
+  min-height:100vh;
+  font-family:Georgia,"Times New Roman",serif;
+  color:#fff;
+  background:
+    radial-gradient(
+      circle at 20% 0%,
+      #214968 0%,
+      #102b40 35%,
+      #06121d 75%,
+      #02080d 100%
+    );
+}
+
+header{
+  height:92px;
+  display:flex;
+  align-items:center;
+  padding:0 28px;
+  background:#030c15;
+  border-bottom:1px solid rgba(255,255,255,.12);
+}
+
+.logo{
+  font-size:34px;
+  font-weight:bold;
+  letter-spacing:8px;
+}
+
+main{
+  max-width:650px;
+  margin:auto;
+  padding:45px 18px 80px;
+}
+
+.card{
+  background:
+    linear-gradient(
+      145deg,
+      rgba(53,82,105,.62),
+      rgba(12,27,40,.88)
+    );
+
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:25px;
+  padding:30px;
+  box-shadow:
+    0 20px 60px rgba(0,0,0,.35);
+}
+
+.logo-title{
+  font-size:42px;
+  line-height:1.1;
+  margin-bottom:8px;
+}
+
+.subtitle{
+  color:#b9c8d4;
+  font-size:20px;
+  margin-bottom:28px;
+}
+
+.tabs{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-bottom:25px;
+}
+
+.tab{
+  padding:15px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.06);
+  color:#fff;
+  font-family:inherit;
+  font-size:18px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.tab.active{
+  background:#fff;
+  color:#07121c;
+}
+
+label{
+  display:block;
+  margin:17px 0;
+  font-size:17px;
+  font-weight:bold;
+}
+
+input,
+select{
+  width:100%;
+  margin-top:8px;
+  padding:15px;
+  border-radius:13px;
+  border:1px solid rgba(255,255,255,.16);
+  background:#030d18;
+  color:#fff;
+  font-size:16px;
+  outline:none;
+}
+
+input:focus,
+select:focus{
+  border-color:#fff;
+}
+
+.password-box{
+  position:relative;
+}
+
+.password-box input{
+  padding-right:55px;
+}
+
+.show-password{
+  position:absolute;
+  right:8px;
+  bottom:7px;
+  width:42px;
+  height:42px;
+  border:0;
+  border-radius:10px;
+  background:rgba(255,255,255,.1);
+  color:#fff;
+  cursor:pointer;
+}
+
+.primary{
+  width:100%;
+  padding:16px;
+  margin-top:8px;
+  border:0;
+  border-radius:14px;
+  background:#fff;
+  color:#07121c;
+  font-family:inherit;
+  font-size:18px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.primary:active{
+  transform:scale(.99);
+}
+
+.secondary{
+  width:100%;
+  padding:14px;
+  margin-top:8px;
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:13px;
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  font-family:inherit;
+  font-size:16px;
+  cursor:pointer;
+}
+
+.danger{
+  width:100%;
+  padding:14px;
+  margin-top:10px;
+  border:0;
+  border-radius:13px;
+  background:#a52d39;
+  color:#fff;
+  font-family:inherit;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.sos{
+  width:100%;
+  padding:16px;
+  border:0;
+  border-radius:14px;
+  background:#b51f30;
+  color:#fff;
+  font-family:inherit;
+  font-size:17px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.message{
+  min-height:22px;
+  margin-top:15px;
+  line-height:1.5;
+  font-size:14px;
+}
+
+.success{
+  color:#7df0a8;
+}
+
+.error{
+  color:#ff9999;
+}
+
+.hidden{
+  display:none!important;
+}
+
+.booking-title{
+  font-size:28px;
+  margin-bottom:5px;
+}
+
+.user-info{
+  color:#b8c7d3;
+  font-size:14px;
+  margin-bottom:20px;
+}
+
+.fare-box{
+  margin:18px 0;
+  padding:18px;
+  border-radius:14px;
+  background:rgba(0,0,0,.25);
+  border:1px solid rgba(255,255,255,.1);
+  text-align:center;
+}
+
+.fare-label{
+  color:#aebfcd;
+  font-size:14px;
+}
+
+.fare{
+  font-size:30px;
+  font-weight:bold;
+  margin-top:4px;
+}
+
+.ride-status{
+  margin-top:20px;
+  padding:18px;
+  border-radius:14px;
+  background:rgba(0,0,0,.22);
+  border:1px solid rgba(255,255,255,.1);
+  line-height:1.8;
+}
+
+.status-title{
+  font-size:18px;
+  font-weight:bold;
+  margin-bottom:7px;
+}
+
+.safety{
+  margin-top:20px;
+}
+
+.logout{
+  margin-top:20px;
+  width:100%;
+  padding:12px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.15);
+  background:transparent;
+  color:#aebdca;
+  cursor:pointer;
+}
+
+footer{
+  text-align:center;
+  color:#65798a;
+  padding:20px;
+  font-size:14px;
+}
+
+@media(max-width:500px){
+
+  header{
+    height:76px;
+    padding:0 20px;
+  }
+
+  .logo{
+    font-size:27px;
+  }
+
+  main{
+    padding:28px 13px 60px;
+  }
+
+  .card{
+    padding:23px 18px;
+    border-radius:21px;
+  }
+
+  .logo-title{
+    font-size:34px;
+  }
+
+  .subtitle{
+    font-size:17px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">RYDO</div>
+</header>
+
+
+<main>
+
+<!-- =========================
+     AUTH SCREEN
+========================= -->
+
+<section id="authScreen" class="card">
+
+  <div class="logo-title">
+    Move your way.
+  </div>
+
+  <div class="subtitle">
+    Safe rides. Simple booking.
+  </div>
+
+
+  <div class="tabs">
+
+    <button
+      id="loginTab"
+      class="tab active"
+      type="button"
+      onclick="showLogin()">
+      Login
+    </button>
+
+    <button
+      id="registerTab"
+      class="tab"
+      type="button"
+      onclick="showRegister()">
+      Register
+    </button>
+
+  </div>
+
+
+  <form id="authForm">
+
+    <div id="registerFields" class="hidden">
+
+      <label>
+        Full name
+
+        <input
+          id="fullName"
+          type="text"
+          autocomplete="name"
+          placeholder="Your full name">
+      </label>
+
+
+      <label>
+        Phone number
+
+        <input
+          id="phone"
+          type="tel"
+          autocomplete="tel"
+          placeholder="98XXXXXXXX">
+      </label>
+
+    </div>
+
+
+    <label>
+      Email
+
+      <input
+        id="email"
+        type="email"
+        autocomplete="email"
+        placeholder="you@example.com"
+        required>
+    </label>
+
+
+    <label>
+      Password
+
+      <div class="password-box">
+
+        <input
+          id="password"
+          type="password"
+          minlength="6"
+          autocomplete="current-password"
+          placeholder="Minimum 6 characters"
+          required>
+
+        <button
+          class="show-password"
+          type="button"
+          onclick="togglePassword()">
+          👁
+        </button>
+
+      </div>
+
+    </label>
+
+
+    <button
+      id="authButton"
+      class="primary"
+      type="submit">
+      Login
+    </button>
+
+  </form>
+
+
+  <div
+    id="authMessage"
+    class="message">
+  </div>
+
+</section>
+
+
+
+<!-- =========================
+     PASSENGER APP
+========================= -->
+
+<section
+  id="pass
