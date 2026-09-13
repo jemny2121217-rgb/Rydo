@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RideNow - Ride Hailing</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f5f5f5;
+      color: #1a1a1a;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Navbar */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      background: white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      position: relative;
+      z-index: 100;
+    }
+
+    .logo {
+      font-size: 22px;
+      font-weight: 700;
+      color: #000;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo span {
+      background: #000;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: #333;
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .btn {
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1.5px solid #ddd;
+      color: #333;
+    }
+
+    .btn-primary {
+      background: #000;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #333;
+    }
+
+    /* Main Layout */
+    .container {
+      display: flex;
+      height: calc(100vh - 64px);
+    }
+
+    /* Left Panel - Booking */
+    .booking-panel {
+      width: 380px;
+      background: white;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+      z-index: 10;
+      overflow-y: auto;
+    }
+
+    .booking-panel h2 {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .location-input {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #f7f7f7;
+      border-radius: 12px;
+      padding: 14px 16px;
+      border: 1.5px solid transparent;
+      transition: border 0.2s;
+    }
+
+    .location-input:focus-within {
+      border-color: #000;
+      background: white;
+    }
+
+    .location-input .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .dot.green { background: #22c55e; }
+    .dot.black { background: #000; }
+
+    .location-input input {
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 15px;
+      width: 100%;
+      font-family: inherit;
+    }
+
+    .location-input input::placeholder {
+      color: #999;
+    }
+
+    /* Ride Options */
+    .ride-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .ride-option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1.5px solid #eee;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .ride-option:hover,
+    .ride-option.selected {
+      border-color: #000;
+      background: #fafafa;
+    }
+
+    .ride-info {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .ride-icon {
+      width: 48px;
+      height: 48px;
+      background: #f0f0f0;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+
+    .ride-details h4 {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .ride-details p {
+      font-size: 13px;
+      color: #666;
+      margin-top: 2px;
+    }
+
+    .ride-price {
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    /* Request Button */
+    .request-btn {
+      margin-top: auto;
+      width: 100%;
+      padding: 16px;
+      background: #000;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .request-btn:hover {
+      background: #333;
+    }
+
+    .request-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    /* Map Area */
+    .map-area {
+      flex: 1;
+      background: #e8e8e8;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-image: 
+        linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    .map-placeholder {
+      text-align: center;
+      color: #888;
+    }
+
+    .map-placeholder svg {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    .map-placeholder p {
+      font-size: 15px;
+    }
+
+    /* Fake pins */
+    .pin {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      background: #000;
+    }
+
+    .pin::after {
+      content: '';
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: white;
+      border-radius: 50%;
+      top: 6px;
+      left: 6px;
+    }
+
+    .pin.pickup {
+      top: 40%;
+      left: 35%;
+      background: #22c55e;
+    }
+
+    .pin.dropoff {
+      top: 55%;
+      left: 60%;
+      background: #000;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column-reverse;
+      }
+
+      .booking-panel {
+        width: 100%;
+        height: 55%;
+        border-radius: 20px 20px 0 0;
+      }
+
+      .map-area {
+        height: 45%;
+      }
+
+      .nav-links a:not(.btn) {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="logo">
+      Ride<span>Now</span>
+    </div>
+    <div class="nav-links">
+      <a href="#">Drive</a>
+      <a href="#">Help</a>
+      <button class="btn btn-outline">Log in</button>
+      <button class="btn btn-primary">Sign up</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- Booking Panel -->
+    <div class="booking-panel">
+      <h2>Where to?</h2>
+
+      <div class="input-group">
+        <div class="location-input">
+          <div class="dot green"></div>
+          <input type="text" id="pickup" placeholder="Pickup location" value="Current location">
+        </div>
+        <div class="location-input">
+          <div class="dot black"></div>
+          <input type="text" id="dropoff" placeholder="Where to?">
+        </div>
+      </div>
+
+      <div class="ride-options">
+        <div class="ride-option selected" onclick="selectRide(this)">
+          <div class="ride-info">
+            <div class="ride-icon">🚗</div>
+            <div class="ride-details">
+              <h4>RideNow</h4>
+              <p>4 min away · Affordable</p>
+            </div>
+          </div>
+          <div class="ride-price">$12.50</div>
+        </div>
+
+        <div class="ride-option" onclick="selectRide(this)">
+          <div class="ride-info">
+            <div class="ride-icon">🚙</div>
+            <div class="ride-details">
+              <h4>Comfort</h4>
+              <p>6 min away · Newer cars</p>
+            </div>
+          </div>
+          <div class="ride-price">$18.20</div>
+        </div>
+
+        <div class="ride-option" onclick="selectRide(this)">
+          <div class="ride-info">
+            <div class="ride-icon">🏎️</div>
+            <div class="ride-details">
+              <h4>Premium</h4>
+              <p>8 min away · Top drivers</p>
+            </div>
+          </div>
+          <div class="ride-price">$28.00</div>
+        </div>
+      </div>
+
+      <button class="request-btn" onclick="requestRide()">
+        Request RideNow
+      </button>
+    </div>
+
+    <!-- Map Area -->
+    <div class="map-area">
+      <div class="pin pickup"></div>
+      <div class="pin dropoff"></div>
+      <div class="map-placeholder">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+          <circle cx="12" cy="9" r="2.5"/>
+        </svg>
+        <p>Map will appear here<br><small>(Connect Google Maps / Mapbox later)</small></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function selectRide(element) {
+      document.querySelectorAll('.ride-option').forEach(el => el.classList.remove('selected'));
+      element.classList.add('selected');
+      
+      const rideName = element.querySelector('h4').textContent;
+      document.querySelector('.request-btn').textContent = `Request ${rideName}`;
+    }
+
+    function requestRide() {
+      const pickup = document.getElementById('pickup').value;
+      const dropoff = document.getElementById('dropoff').value;
+
+      if (!dropoff.trim()) {
+        alert('Please enter a destination');
+        return;
+      }
+
+      alert(`Looking for drivers...\n\nFrom: ${pickup}\nTo: ${dropoff}`);
+      // Later: call your backend API here
+    }
+  </script>
+</body>
+  </html>
