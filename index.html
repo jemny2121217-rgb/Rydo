@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Rydo — Safe rides. Simple booking.</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #06111c;
+      --card: #122638;
+      --card2: #0c1c2a;
+      --input: #030c15;
+      --text: #ffffff;
+      --muted: #aebdca;
+      --border: rgba(255,255,255,0.14);
+      --danger: #b92d3c;
+      --success: #52d88a;
+    }
+
+    body {
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(
+          circle at 15% 0%,
+          #244d6b 0%,
+          #12344d 28%,
+          #081827 62%,
+          #020910 100%
+        );
+      font-family: Georgia, "Times New Roman", serif;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    header {
+      height: 78px;
+      display: flex;
+      align-items: center;
+      padding: 0 22px;
+      background: #030c15;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .logo {
+      font-size: 30px;
+      font-weight: bold;
+      letter-spacing: 7px;
+    }
+
+    main {
+      width: 100%;
+      max-width: 650px;
+      margin: 0 auto;
+      padding: 28px 15px 70px;
+    }
+
+    .card {
+      width: 100%;
+      padding: 27px;
+      border-radius: 24px;
+      border: 1px solid var(--border);
+      background:
+        linear-gradient(
+          145deg,
+          rgba(40,69,91,0.78),
+          rgba(10,25,38,0.94)
+        );
+      box-shadow: 0 20px 60px rgba(0,0,0,0.38);
+    }
+
+    .hero-title {
+      font-size: 39px;
+      line-height: 1.12;
+      margin-bottom: 8px;
+    }
+
+    .hero-subtitle {
+      color: var(--muted);
+      font-size: 19px;
+      margin-bottom: 27px;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+      margin-bottom: 22px;
+    }
+
+    .tab {
+      min-height: 50px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.06);
+      color: white;
+      font-weight: bold;
+    }
+
+    .tab.active {
+      background: white;
+      color: #07131e;
+    }
+
+    .field {
+      margin-bottom: 17px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    input,
+    select {
+      width: 100%;
+      height: 52px;
+      padding: 0 14px;
+      border-radius: 13px;
+      border: 1px solid var(--border);
+      background: var(--input);
+      color: white;
+      outline: none;
+      font-family: Arial, sans-serif;
+      font-size: 16px;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: rgba(255,255,255,0.55);
+    }
+
+    input::placeholder {
+      color: #667887;
+    }
+
+    .password-wrap {
+      position: relative;
+    }
+
+    .password-wrap input {
+      padding-right: 58px;
+    }
+
+    .eye {
+      position: absolute;
+      right: 6px;
+      top: 5px;
+      width: 42px;
+      height: 42px;
+      border: 0;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.09);
+      color: white;
+    }
+
+    .primary {
+      width: 100%;
+      min-height: 52px;
+      border: 0;
+      border-radius: 14px;
+      background: white;
+      color: #07131e;
+      font-weight: bold;
+      margin-top: 4px;
+    }
+
+    .primary:disabled {
+      opacity: 0.55;
+      cursor: wait;
+    }
+
+    .secondary {
+      width: 100%;
+      min-height: 48px;
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      background: rgba(255,255,255,0.07);
+      color: white;
+      margin-bottom: 17px;
+    }
+
+    .danger {
+      width: 100%;
+      min-height: 50px;
+      border: 0;
+      border-radius: 13px;
+      background: var(--danger);
+      color: white;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .message {
+      min-height: 23px;
+      margin-top: 13px;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .message.success {
+      color: var(--success);
+    }
+
+    .message.error {
+      color: #ff9696;
+    }
+
+    .section-title {
+      font-size: 27px;
+      margin-bottom: 5px;
+    }
+
+    .account {
+      color: var(--muted);
+      font-family: Arial, sans-serif;
+      font-size: 13px;
+      margin-bottom: 22px;
+    }
+
+    .fare-box {
+      margin: 17px 0;
+      padding: 18px;
+      text-align: center;
+      border-radius: 15px;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid var(--border);
+    }
+
+    .fare-label {
+      color: var(--muted);
+      font-family: Arial, sans-serif;
+      font-size: 13px;
+    }
+
+    .fare-value {
+      margin-top: 5px;
+      font-family: Arial, sans-serif;
+      font-size: 30px;
+      font-weight: bold;
+    }
+
+    .ride-card {
+      margin-top: 20px;
+      padding: 18px;
+      border-radius: 15px;
+      background: rgba(0,0,0,0.23);
+      border: 1px solid var(--border);
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .ride-status-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 6px;
+      text-transform: capitalize;
+    }
+
+    .sos {
+      width: 100%;
+      min-height: 52px;
+      margin-top: 20px;
+      border: 0;
+      border-radius: 14px;
+      background: #b51e31;
+      color: white;
+      font-weight: bold;
+    }
+
+    .logout {
+      width: 100%;
+      min-height: 45px;
+      margin-top: 14px;
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      background: transparent;
+      color: #9aaab7;
+    }
+
+    .small-note {
+      margin-top: 12px;
+      color: #8799a8;
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    footer {
+      padding: 20px;
+      text-align: center;
+      color: #607587;
+      font-size: 14px;
+    }
+
+    @media (max-width: 500px) {
+      .card {
+        padding: 21px 17px;
+        border-radius: 20px;
+      }
+
+      .hero-title {
+        font-size: 34px;
+      }
+
+      .hero-subtitle {
+        font-size: 17px;
+      }
+
+      .logo {
+        font-size: 26px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- =========================
+       HEADER
+  ========================== -->
+
+  <header>
+    <div class="logo">RYDO</div>
+  </header>
+
+
+  <main>
+
+    <!-- =========================
+         LOGIN / REGISTER
+    ========================== -->
+
+    <section id="authScreen" class="card">
+
+      <h1 class="hero-title">
+        Move your way.
+      </h1>
+
+      <p class="hero-subtitle">
+        Safe rides. Simple booking.
+      </p>
+
+
+      <div class="tabs">
+
+        <button
+          id="loginTab"
+          class="tab active"
+          type="button">
+          Login
+        </button>
+
+        <button
+          id="registerTab"
+          class="tab"
+          type="button">
+          Register
+        </button>
+
+      </div>
+
+
+      <form id="authForm">
+
+        <!-- REGISTER ONLY -->
+
+        <div id="registerFields" class="hidden">
+
+          <div class="field">
+
+            <label for="fullName">
+              Full name
+            </label>
+
+            <input
+              id="fullName"
+              type="text"
+              autocomplete="name"
+              placeholder="Enter your full name">
+
+          </div>
+
+
+          <div class="field">
+
+            <label for="phone">
+              Phone number
+            </label>
+
+            <input
+              id="phone"
+              type="tel"
+              autocomplete="tel"
+              placeholder="98XXXXXXXX">
+
+          </div>
+
+        </div>
+
+
+        <!-- EMAIL -->
+
+        <div class="field">
+
+          <label for="email">
+            Email
+          </label>
+
+          <input
+            id="email"
+            type="email"
+            autocomplete="email"
+            placeholder="you@example.com"
+            required>
+
+        </div>
+
+
+        <!-- PASSWORD -->
+
+        <div class="field">
+
+          <label for="password">
+            Password
+          </label>
+
+          <div class="password-wrap">
+
+            <input
+              id="password"
+              type="password"
+              minlength="6"
+              autocomplete="current-password"
+              placeholder="Minimum 6 characters"
+              required>
+
+            <button
+              id="eyeButton"
+              class="eye"
+              type="button">
+              👁
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <button
+          id="authButton"
+          class="primary"
+          type="submit">
+          Login
+        </button>
+
+      </form>
+
+
+      <div
+        id="authMessage"
+        class="message">
+      </div>
+
+    </section>
+
+
+
+    <!-- =========================
+         PASSENGER APP
+    ========================== -->
+
+    <section
+      id="passengerScreen"
+      class="card hidden">
+
+      <h2 class="section-title">
+        Book a Rydo
+      </h2>
+
+      <div
+        id="accountInfo"
+        class="account">
+      </div>
+
+
+      <!-- PICKUP -->
+
+      <div class="field">
+
+        <label for="pickup">
+          Pickup location
+        </label>
+
+        <input
+          id="pickup"
+          type="text"
+          placeholder="Enter pickup location">
+
+      </div>
+
+
+      <button
+        id="locationButton"
+        class="secondary"
+        type="button">
+        📍 Use my current location
+      </button>
+
+
+      <!-- DESTINATION -->
+
+      <div class="field">
+
+        <label for="destination">
+          Destination
+        </label>
+
+        <input
+          id="destination"
+          type="text"
+          placeholder="Enter destination">
+
+      </div>
+
+
+      <!-- VEHICLE -->
+
+      <div class="field">
+
+        <label for="vehicleType">
+          Vehicle
+        </label>
+
+        <select id="vehicleType">
+
+          <option value="Bike">
+            🏍 Bike
+          </option>
+
+          <option value="Car">
+            🚗 Car
+          </option>
+
+          <option value="Tuk Tuk">
+            🛺 Tuk Tuk
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <!-- DISTANCE -->
+
+      <div class="field">
+
+        <label for="distance">
+          Distance (km)
+        </label>
+
+        <input
+          id="distance"
+          type="number"
+          min="0.1"
+          step="0.1"
+          placeholder="Enter trip distance">
+
+      </div>
+
+
+      <!-- FARE -->
+
+      <div class="fare-box">
+
+        <div class="fare-label">
+          Estimated fare
+        </div>
+
+        <div
+          id="fareValue"
+          class="fare-value">
+          NPR —
+        </div>
+
+      </div>
+
+
+      <!-- PAYMENT -->
+
+      <div class="field">
+
+        <label for="paymentMethod">
+          Payment method
+        </label>
+
+        <select id="paymentMethod">
+
+          <option value="cash">
+            Cash
+          </option>
+
+          <option value="online">
+            Online payment
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <!-- REQUEST -->
+
+      <button
+        id="requestButton"
+        class="primary"
+        type="button">
+        Request ride
+      </button>
+
+
+      <!-- CANCEL -->
+
+      <button
+        id="cancelButton"
+        class="danger hidden"
+        type="button">
+        Cancel ride
+      </button>
+
+
+      <div
+        id="rideMessage"
+        class="message">
+      </div>
+
+
+      <!-- CURRENT RIDE -->
+
+      <div
+        id="rideCard"
+        class="ride-card hidden">
+      </div>
+
+
+      <!-- SOS -->
+
+      <button
+        id="sosButton"
+        class="sos"
+        type="button">
+        🚨 SOS / Emergency
+      </button>
+
+
+      <!-- LOGOUT -->
+
+      <button
+        id="logoutButton"
+        class="logout"
+        type="button">
+        Log out
+      </button>
+
+
+      <p class="small-note">
+        For an immediate emergency, contact local emergency services.
+      </p>
+
+    </section>
+
+  </main>
+
+
+  <footer>
+    Rydo V1 · Nepal
+  </footer>
+
+
+
+  <script>
+
+    /* =====================================================
+       SUPABASE CONFIGURATION
+    ===================================================== */
+
+    const SUPABASE_URL =
+      "https://pdfgqlvovmyzhdnumypq.supabase.co";
+
+    const SUPABASE_KEY =
+      "sb_publishable_cZnuDJwbDbtF2dDJ_M6rCg_-e-nWdMX";
+
+
+    const supabaseClient =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
+
+
+    /* =====================================================
+       APP STATE
+    ===================================================== */
+
+    let currentUser = null;
+    let currentProfile = null;
+    let authMode = "login";
+    let rideRefreshTimer = null;
+
+
+    /* =====================================================
+       ELEMENTS
+    ===================================================== */
+
+    const authScreen =
+      document.getElementById("authScreen");
+
+    const passengerScreen =
+      document.getElementById("passengerScreen");
+
+    const loginTab =
+      document.getElementById("loginTab");
+
+    const registerTab =
+      document.getElementById("registerTab");
+
+    const registerFields =
+      document.getElementById("registerFields");
+
+    const authForm =
+      document.getElementById("authForm");
+
+    const authButton =
+      document.getElementById("authButton");
+
+    const authMessage =
+      document.getElementById("authMessage");
+
+    const fullName =
+      document.getElementById("fullName");
+
+    const phone =
+      document.getElementById("phone");
+
+    const email =
+      document.getElementById("email");
+
+    const password =
+      document.getElementById("password");
+
+    const eyeButton =
+      document.getElementById("eyeButton");
+
+    const accountInfo =
+      document.getElementById("accountInfo");
+
+    const pickup =
+      document.getElementById("pickup");
+
+    const destination =
+      document.getElementById("destination");
+
+    const vehicleType =
+      document.getElementById("vehicleType");
+
+    const distance =
+      document.getElementById("distance");
+
+    const fareValue =
+      document.getElementById("fareValue");
+
+    const paymentMethod =
+      document.getElementById("paymentMethod");
+
+    const locationButton =
+      document.getElementById("locationButton");
+
+    const requestButton =
+      document.getElementById("requestButton");
+
+    const cancelButton =
+      document.getElementById("cancelButton");
+
+    const rideMessage =
+      document.getElementById("rideMessage");
+
+    const rideCard =
+      document.getElementById("rideCard");
+
+    const sosButton =
+      document.getElementById("sosButton");
+
+    const logoutButton =
+      document.getElementById("logoutButton");
+
+
+    /* =====================================================
+       MESSAGE FUNCTIONS
+    ===================================================== */
+
+    function showAuthMessage(text, type) {
+
+      authMessage.textContent = text;
+
+      authMessage.className =
+        "message " +
+        (type || "");
+
+    }
+
+
+    function showRideMessage(text, type) {
+
+      rideMessage.textContent = text;
+
+      rideMessage.className =
+        "message " +
+        (type || "");
+
+    }
+
+
+    /* =====================================================
+       AUTH MODE
+    ===================================================== */
+
+    function setLoginMode() {
+
+      authMode = "login";
+
+      loginTab.classList.add("active");
+      registerTab.classList.remove("active");
+
+      registerFields.classList.add("hidden");
+
+      fullName.required = false;
+      phone.required = false;
+
+      authButton.textContent = "Login";
+
+      password.autocomplete =
+        "current-password";
+
+      showAuthMessage("");
+
+    }
+
+
+    function setRegisterMode() {
+
+      authMode = "register";
+
+      loginTab.classList.remove("active");
+      registerTab.classList.add("active");
+
+      registerFields.classList.remove("hidden");
+
+      fullName.required = true;
+      phone.required = true;
+
+      authButton.textContent =
+        "Create account";
+
+      password.autocomplete =
+        "new-password";
+
+      showAuthMessage("");
+
+    }
+
+
+    loginTab.addEventListener(
+      "click",
+      setLoginMode
+    );
+
+
+    registerTab.addEventListener(
+      "click",
+      setRegisterMode
+    );
+
+
+    /* =====================================================
+       SHOW / HIDE PASSWORD
+    ===================================================== */
+
+    eyeButton.addEventListener(
+      "click",
+      function () {
+
+        if (password.type === "password") {
+
+          password.type = "text";
+          eyeButton.textContent = "🙈";
+
+        } else {
+
+          password.type = "password";
+          eyeButton.textContent = "👁";
+
+        }
+
+      }
+    );
+
+
+    /* =====================================================
+       REGISTER
+    ===================================================== */
+
+    async function registerPassenger() {
+
+      const name =
+        fullName.value.trim();
+
+      const phoneNumber =
+        phone.value.trim();
+
+      const emailAddress =
+        email.value.trim();
+
+      const pass =
+        password.value;
+
+
+      if (!name) {
+        throw new Error(
+          "Please enter your full name."
+        );
+      }
+
+
+      if (!phoneNumber) {
+        throw new Error(
+          "Please enter your phone number."
+        );
+      }
+
+
+      if (!emailAddress) {
+        throw new Error(
+          "Please enter your email."
+        );
+      }
+
+
+      if (pass.length < 6) {
+        throw new Error(
+          "Password must contain at least 6 characters."
+        );
+      }
+
+
+      const result =
+        await supabaseClient.auth.signUp({
+
+          email: emailAddress,
+
+          password: pass,
+
+          options: {
+
+            data: {
+
+              full_name: name,
+
+              phone: phoneNumber
+
+            }
+
+          }
+
+        });
+
+
+      if (result.error) {
+        throw result.error;
+      }
+
+
+      /*
+       * IMPORTANT:
+       *
+       * We don't insert into profiles here when
+       * email confirmation is enabled.
+       *
+       * The user may not have an authenticated
+       * session until they confirm the email.
+       */
+
+
+      if (result.data.session) {
+
+        currentUser =
+          result.data.user;
+
+        await createProfileIfNeeded(
+          name,
+          phoneNumber
+        );
+
+        await openPassengerApp();
+
+        return;
+      }
+
+
+      showAuthMessage(
+        "Account created. Check your email, confirm your account, then return here and log in.",
+        "success"
+      );
+
+
+      authForm.reset();
+
+    }
+
+
+    /* =====================================================
+       LOGIN
+    ===================================================== */
+
+    async function loginPassenger() {
+
+      const emailAddress =
+        email.value.trim();
+
+      const pass =
+        password.value;
+
+
+      if (!emailAddress) {
+        throw new Error(
+          "Please enter your email."
+        );
+      }
+
+
+      if (!pass) {
+        throw new Error(
+          "Please enter your password."
+        );
+      }
+
+
+      const result =
+        await supabaseClient.auth.signInWithPassword({
+
+          email: emailAddress,
+
+          password: pass
+
+        });
+
+
+      if (result.error) {
+        throw result.error;
+      }
+
+
+      currentUser =
+        result.data.user;
+
+
+      await createProfileIfNeeded();
+
+
+      await openPassengerApp();
+
+    }
+
+
+    /* =====================================================
+       CREATE PROFILE
+    ===================================================== */
+
+    async function createProfileIfNeeded(
+      suppliedName = "",
+      suppliedPhone = ""
+    ) {
+
+      if (!currentUser) {
+        throw new Error(
+          "No authenticated user."
+        );
+      }
+
+
+      const existing =
+        await supabaseClient
+          .from("profiles")
+          .select("*")
+          .eq("id", currentUser.id)
+          .maybeSingle();
+
+
+  
