@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Rydo Driver</title>
+
+  <link rel="stylesheet" href="css/driver.css">
+</head>
+
+<body>
+
+  <!-- =====================================================
+       HEADER
+       ===================================================== -->
+
+  <header class="driver-header">
+
+    <div>
+      <div class="brand">Rydo</div>
+      <div class="brand-subtitle">Driver</div>
+    </div>
+
+    <button
+      id="logoutBtn"
+      class="small-button"
+      type="button"
+    >
+      Logout
+    </button>
+
+  </header>
+
+
+  <!-- =====================================================
+       LOGIN / REGISTRATION
+       ===================================================== -->
+
+  <main id="driverAuth" class="auth-container">
+
+    <section class="auth-card">
+
+      <div class="auth-title">
+        <h1>Driver Portal</h1>
+        <p>Drive with Rydo</p>
+      </div>
+
+
+      <!-- LOGIN -->
+
+      <div id="driverLoginSection">
+
+        <h2>Login</h2>
+
+        <label for="driverLoginEmail">
+          Email
+        </label>
+
+        <input
+          id="driverLoginEmail"
+          type="email"
+          placeholder="Enter your email"
+          autocomplete="email"
+        >
+
+
+        <label for="driverLoginPassword">
+          Password
+        </label>
+
+        <div class="password-box">
+
+          <input
+            id="driverLoginPassword"
+            type="password"
+            placeholder="Enter password"
+            autocomplete="current-password"
+          >
+
+          <button
+            id="driverPasswordToggle"
+            type="button"
+            class="password-toggle"
+          >
+            Show
+          </button>
+
+        </div>
+
+
+        <button
+          id="driverLoginBtn"
+          class="primary-button"
+          type="button"
+        >
+          Login
+        </button>
+
+
+        <button
+          id="showDriverRegisterBtn"
+          class="secondary-button"
+          type="button"
+        >
+          Create Driver Account
+        </button>
+
+      </div>
+
+
+      <!-- REGISTRATION -->
+
+      <div
+        id="driverRegisterSection"
+        class="hidden"
+      >
+
+        <h2>Create Driver Account</h2>
+
+
+        <label for="driverName">
+          Full Name
+        </label>
+
+        <input
+          id="driverName"
+          type="text"
+          placeholder="Your full name"
+          autocomplete="name"
+        >
+
+
+        <label for="driverPhone">
+          Phone
+        </label>
+
+        <input
+          id="driverPhone"
+          type="tel"
+          placeholder="98XXXXXXXX"
+          autocomplete="tel"
+        >
+
+
+        <label for="driverRegisterEmail">
+          Email
+        </label>
+
+        <input
+          id="driverRegisterEmail"
+          type="email"
+          placeholder="Your email"
+          autocomplete="email"
+        >
+
+
+        <label for="driverRegisterPassword">
+          Password
+        </label>
+
+        <div class="password-box">
+
+          <input
+            id="driverRegisterPassword"
+            type="password"
+            placeholder="Minimum 6 characters"
+            autocomplete="new-password"
+          >
+
+          <button
+            id="driverRegisterPasswordToggle"
+            type="button"
+            class="password-toggle"
+          >
+            Show
+          </button>
+
+        </div>
+
+
+        <label for="driverLicense">
+          Driver License Number
+        </label>
+
+        <input
+          id="driverLicense"
+          type="text"
+          placeholder="License number"
+        >
+
+
+        <h3>Vehicle Information</h3>
+
+
+        <label for="vehicleType">
+          Vehicle Type
+        </label>
+
+        <select id="vehicleType">
+
+          <option value="Bike">
+            Bike
+          </option>
+
+          <option value="Car">
+            Car
+          </option>
+
+          <option value="Tuk Tuk">
+            Tuk Tuk
+          </option>
+
+        </select>
+
+
+        <label for="vehicleNumber">
+          Vehicle Number
+        </label>
+
+        <input
+          id="vehicleNumber"
+          type="text"
+          placeholder="Vehicle number"
+        >
+
+
+        <label for="vehicleModel">
+          Vehicle Model
+        </label>
+
+        <input
+          id="vehicleModel"
+          type="text"
+          placeholder="Vehicle model"
+        >
+
+
+        <button
+          id="driverRegisterBtn"
+          class="primary-button"
+          type="button"
+        >
+          Register as Driver
+        </button>
+
+
+        <button
+          id="showDriverLoginBtn"
+          class="secondary-button"
+          type="button"
+        >
+          Back to Login
+        </button>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <!-- =====================================================
+       DRIVER DASHBOARD
+       ===================================================== -->
+
+  <main
+    id="driverDashboard"
+    class="dashboard hidden"
+  >
+
+
+    <!-- DRIVER PROFILE -->
+
+    <section class="driver-card">
+
+      <div>
+
+        <p class="label">
+          Driver
+        </p>
+
+        <h2 id="driverWelcome">
+          Welcome
+        </h2>
+
+        <p id="driverVerification">
+          Verification pending
+        </p>
+
+      </div>
+
+
+      <!-- ONLINE/OFFLINE -->
+
+      <div class="online-control">
+
+        <span id="onlineStatusText">
+          Offline
+        </span>
+
+        <label class="switch">
+
+          <input
+            id="onlineToggle"
+            type="checkbox"
+          >
+
+          <span class="slider"></span>
+
+        </label>
+
+      </div>
+
+    </section>
+
+
+    <!-- VEHICLE -->
+
+    <section class="card">
+
+      <div class="section-heading">
+
+        <div>
+          <span class="eyebrow">
+            VEHICLE
+          </span>
+
+          <h2 id="driverVehicle">
+            -
+          </h2>
+        </div>
+
+        <span
+          id="vehicleApproval"
+          class="status-badge"
+        >
+          Pending
+        </span>
+
+      </div>
+
+      <p id="driverVehicleNumber">
+        -
+      </p>
+
+      <p id="driverVehicleModel">
+        -
+      </p>
+
+    </section>
+
+
+    <!-- AVAILABLE RIDE REQUESTS -->
+
+    <section
+      id="rideRequestsSection"
+      class="card"
+    >
+
+      <div class="section-heading">
+
+        <div>
+
+          <span class="eyebrow">
+            RIDE REQUESTS
+          </span>
+
+          <h2>
+            Available rides
+          </h2>
+
+        </div>
+
+        <span
+          id="requestCount"
+          class="count-badge"
+        >
+          0
+        </span>
+
+      </div>
+
+
+      <div
+        id="rideRequests"
+        class="ride-list"
+      >
+
+        <div class="empty-state">
+
+          <div class="empty-icon">
+            🚕
+          </div>
+
+          <p>
+            Go online to receive ride requests.
+          </p>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- CURRENT RIDE -->
+
+    <section
+      id="currentRideSection"
+      class="card hidden"
+    >
+
+      <div class="section-heading">
+
+        <div>
+
+          <span class="eyebrow">
+            CURRENT RIDE
+          </span>
+
+          <h2>
+            Ride details
+          </h2>
+
+        </div>
+
+        <span
+          id="currentRideStatus"
+          class="status-badge"
+        >
+          Accepted
+        </span>
+
+      </div>
+
+
+      <div class="route-box">
+
+        <div class="route-point">
+
+          <span class="route-dot pickup-dot"></span>
+
+          <div>
+
+            <small>
+              PICKUP
+            </small>
+
+            <strong id="currentPickup">
+              -
+            </strong>
+
+          </div>
+
+        </div>
+
+
+        <div class="route-line"></div>
+
+
+        <div class="route-point">
+
+          <span class="route-dot destination-dot"></span>
+
+          <div>
+
+            <small>
+              DESTINATION
+            </small>
+
+            <strong id="currentDestination">
+              -
+            </strong>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <div class="ride-info-grid">
+
+        <div>
+
+          <span>
+            Vehicle
+          </span>
+
+          <strong id="currentVehicle">
+            -
+          </strong>
+
+        </div>
+
+
+        <div>
+
+          <span>
+            Fare
+          </span>
+
+          <strong id="currentFare">
+            NPR 0
+          </strong>
+
+        </div>
+
+
+        <div>
+
+          <span>
+            Payment
+          </span>
+
+          <strong id="currentPayment">
+            Cash
+          </strong>
+
+        </div>
+
+
+        <div>
+
+          <span>
+            Distance
+          </span>
+
+          <strong id="currentDistance">
+            -
+          </strong>
+
+        </div>
+
+      </div>
+
+
+      <!-- START -->
+
+      <button
+        id="startRideBtn"
+        class="primary-button"
+        type="button"
+      >
+        Start Ride
+      </button>
+
+
+      <!-- COMPLETE -->
+
+      <button
+        id="completeRideBtn"
+        class="success-button"
+        type="button"
+      >
+        Complete Ride
+      </button>
+
+
+      <div
+        id="onlinePaymentStatus"
+        class="payment-status hidden"
+      >
+
+        <span>
+          Online payment
+        </span>
+
+        <strong>
+          Pending
+        </strong>
+
+      </div>
+
+    </section>
+
+
+    <!-- EARNINGS -->
+
+    <section class="card earnings-card">
+
+      <span class="eyebrow">
+        EARNINGS
+      </span>
+
+      <h2 id="todayEarnings">
+        NPR 0
+      </h2>
+
+      <p>
+        Your driver earnings
+      </p>
+
+    </section>
+
+
+    <!-- DRIVER LOCATION -->
+
+    <section class="card location-card">
+
+      <div>
+
+        <span class="eyebrow">
+          LIVE LOCATION
+        </span>
+
+        <h2>
+          Driver GPS
+        </h2>
+
+        <p id="locationStatus">
+          Location sharing is off.
+        </p>
+
+      </div>
+
+      <span
+        id="locationIndicator"
+        class="location-indicator"
+      ></span>
+
+    </section>
+
+  </main>
+
+
+  <!-- =====================================================
+       TOAST
+       ===================================================== -->
+
+  <div
+    id="driverToast"
+    class="toast"
+    role="status"
+    aria-live="polite"
+  ></div>
+
+
+  <!-- =====================================================
+       JAVASCRIPT
+       ===================================================== -->
+
+  <script
+    type="module"
+    src="js/driver.js"
+  ></script>
+
+</body>
+  </html>
