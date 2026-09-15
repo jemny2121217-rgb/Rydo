@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rydo - Move your way</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#080b10;color:#fff;font-family:Arial,sans-serif}
+.app{max-width:600px;margin:auto;padding:16px}
+header{display:flex;justify-content:space-between;align-items:center;padding:10px 0 20px}
+.logo{font-size:25px;font-weight:bold;color:#8b72ff}.tag{color:#8f99a8;font-size:12px}
+.card{background:#111720;border:1px solid #252d38;border-radius:20px;padding:18px;margin-bottom:15px}
+h1{font-size:28px;margin:5px 0}h2{font-size:19px;margin:0 0 15px}
+p,.muted{color:#9ba5b3;font-size:13px}label{display:block;color:#cbd2dc;font-size:12px;margin:12px 0 6px}
+input,select{width:100%;height:48px;background:#090d13;color:#fff;border:1px solid #29313c;border-radius:12px;padding:0 13px;outline:0}
+input:focus,select:focus{border-color:#8063ff}
+button{width:100%;min-height:48px;border:0;border-radius:13px;font-weight:bold;cursor:pointer}
+.primary{background:#7657f5;color:#fff}.secondary{background:#1a212b;color:#fff;border:1px solid #303845}.danger{background:#32161c;color:#ff7180;border:1px solid #63303a}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#090d13;padding:5px;border-radius:13px;margin-bottom:18px}
+.tab{background:transparent;color:#8993a2}.tab.active{background:#1a212b;color:#fff}
+.hidden{display:none!important}.msg{text-align:center;min-height:20px;font-size:13px;margin-top:12px;color:#9ba5b3}
+.showpass{position:absolute;right:6px;top:6px;width:auto;min-height:36px;padding:0 10px;background:#202732;color:#fff}
+.pass{position:relative}.pass input{padding-right:70px}
+.vehicles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.vehicle{background:#0a0f15;border:1px solid #29313c;border-radius:13px;padding:15px 5px;text-align:center}
+.vehicle.active{border-color:#8063ff;background:#17132d}.vehicle input{display:none}.vehicle b{display:block;font-size:13px}
+.summary{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}.box{background:#0a0f15;border:1px solid #29313c;border-radius:12px;padding:12px}.box small{display:block;color:#8f99a8}.box b{font-size:17px}
+.row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #222a34;font-size:13px}.row span{color:#9ba5b3}
+.sos{margin-top:15px}.status{color:#f4b24e;font-size:12px}
+#tracking{height:180px;border-radius:15px;background:#0a0f15;display:grid;place-items:center;color:#9ba5b3}
+a{color:#9b87ff}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<header>
+<div><div class="logo">RYDO</div><div class="tag">Safe rides. Simple booking.</div></div>
+<button id="logoutTop" class="secondary hidden" style="width:auto;padding:0 15px">Logout</button>
+</header>
+
+<!-- LOGIN / REGISTER -->
+<section id="auth" class="card">
+<h1>Welcome to Rydo</h1>
+<p>Move your way.</p>
+
+<div class="tabs">
+<button id="loginTab" class="tab active">Login</button>
+<button id="registerTab" class="tab">Register</button>
+</div>
+
+<form id="loginForm">
+<label>Email</label>
+<input id="loginEmail" type="email" required placeholder="you@example.com">
+<label>Password</label>
+<div class="pass">
+<input id="loginPassword" type="password" required placeholder="Password">
+<button type="button" class="showpass" data-id="loginPassword">Show</button>
+</div>
+<div style="text-align:right;margin:10px 0">
+<button type="button" id="forgot" style="width:auto;background:none;color:#a995ff;min-height:30px">Forgot Password?</button>
+</div>
+<button class="primary">Login</button>
+</form>
+
+<form id="registerForm" class="hidden">
+<label>Full name</label>
+<input id="name" required placeholder="Your name">
+<label>Phone</label>
+<input id="phone" required placeholder="98XXXXXXXX">
+<label>Email</label>
+<input id="email" type="email" required placeholder="you@example.com">
+<label>Password</label>
+<div class="pass">
+<input id="password" type="password" minlength="6" required placeholder="Create password">
+<button type="button" class="showpass" data-id="password">Show</button>
+</div>
+<button class="primary">Create Account</button>
+</form>
+
+<div id="msg" class="msg"></div>
+</section>
+
+<!-- PASSENGER -->
+<main id="passenger" class="hidden">
+
+<div class="card">
+<h1>Where are you going?</h1>
+<p>Book your Rydo ride.</p>
+
+<label>Pickup</label>
+<div style="display:grid;grid-template-columns:1fr 75px;gap:7px">
+<input id="pickup" placeholder="Pickup location">
+<button id="gps" class="secondary">📍 GPS</button>
+</div>
+
+<label>Destination</label>
+<input id="destination" placeholder="Where to?">
+
+<label>Vehicle</label>
+<div class="vehicles">
+<label class="vehicle active"><input name="vehicle" type="radio" value="bike" checked>🏍️<b>Bike</b></label>
+<label class="vehicle"><input name="vehicle" type="radio" value="car">🚗<b>Car</b></label>
+<label class="vehicle"><input name="vehicle" type="radio" value="tuk_tuk">🛺<b>Tuk Tuk</b></label>
+</div>
+
+<div class="summary">
+<div class="box"><small>Distance</small><b id="distance">—</b></div>
+<div class="box"><small>Estimated fare</small><b id="fare">—</b></div>
+</div>
+
+<label>Payment</label>
+<select id="payment">
+<option value="cash">💵 Cash</option>
+<option value="online">📱 Online</option>
+</select>
+
+<button id="request" class="primary" style="margin-top:15px">Request Ride</button>
+</div>
+
+<!-- ACTIVE RIDE -->
+<div id="rideCard" class="card hidden">
+<div style="display:flex;justify-content:space-between">
+<h2>Your Ride</h2><span id="status" class="status">Searching</span>
+</div>
+<div class="row"><span>Pickup</span><b id="rPickup">—</b></div>
+<div class="row"><span>Destination</span><b id="rDestination">—</b></div>
+<div class="row"><span>Vehicle</span><b id="rVehicle">—</b></div>
+<div class="row"><span>Fare</span><b id="rFare">—</b></div>
+<div class="row"><span>Payment</span><b id="rPayment">—</b></div>
+<button id="track" class="secondary" style="margin-top:15px">Track Driver</button>
+<button id="cancel" class="danger" style="margin-top:8px">Cancel Ride</button>
+</div>
+
+<!-- TRACKING -->
+<div id="trackCard" class="card hidden">
+<h2>Driver Tracking</h2>
+<div id="tracking">🚗<br>Live driver location</div>
+<p id="eta">Waiting for driver location...</p>
+<button id="closeTrack" class="secondary">Close Tracking</button>
+</div>
+
+<!-- SOS -->
+<div class="card sos">
+<h2>Safety</h2>
+<p>For emergencies, contact emergency services immediately.</p>
+<button id="sos" class="danger">🆘 SOS Emergency</button>
+</div>
+
+<!-- ACCOUNT -->
+<div class="card">
+<h2>Account</h2>
+<div class="row"><span>Name</span><b id="accountName">—</b></div>
+<div class="row"><span>Phone</span><b id="accountPhone">—</b></div>
+<div class="row"><span>Email</span><b id="accountEmail">—</b></div>
+<button id="logout" class="secondary" style="margin-top:15px">Logout</button>
+</div>
+
+</main>
+</div>
+
+<script>
+const URL="https://pdfgqlvovmyzhdnumypq.supabase.co";
+const KEY="sb_publishable_cZnuDJwbDbtF2dDJ_M6rCg_-e-nWdMX";
+const db=supabase.createClient(URL,KEY);
+
+let user=null,ride=null,distance=0;
+
+const $=id=>document.getElementById(id);
+const msg=(x,e=false)=>{$("msg").textContent=x;$("msg").style.color=e?"#ff7180":"#9ba5b3"};
+const toast=x=>alert(x);
+
+function loginTab(){
+ $("loginTab").classList.add("active");$("registerTab").classList.remove("active");
+ $("loginForm").classList.remove("hidden");$("registerForm").classList.add("hidden");msg("");
+}
+function registerTab(){
+ $("registerTab").classList.add("active");$("loginTab").classList.remove("active");
+ $("registerForm").classList.remove("hidden");$("loginForm").classList.add("hidden");msg("");
+}
+$("loginTab").onclick=loginTab;$("registerTab").onclick=registerTab;
+
+document.querySelectorAll(".showpass").forEach(b=>{
+ b.onclick=()=>{let x=$(b.dataset.id);x.type=x.type==="password"?"text":"password";b.textContent=x.type==="password"?"Show":"Hide"}
+});
+
+$("loginForm").onsubmit=async e=>{
+ e.preventDefault();msg("Signing in...");
+ let r=await db.auth.signInWithPassword({email:$("loginEmail").value.trim(),password:$("loginPassword").value});
+ if(r.error)return msg(r.error.message,true);
+ user=r.data.user;await start();
+};
+
+$("registerForm").onsubmit=async e=>{
+ e.preventDefault();msg("Creating account...");
+ let name=$("name").value.trim(),phone=$("phone").value.trim(),email=$("email").value.trim();
+ let r=await db.auth.signUp({email,password:$("password").value,options:{data:{full_name:name,phone}}});
+ if(r.error)return msg(r.error.message,true);
+ if(r.data.user){
+  await db.from("profiles").upsert({id:r.data.user.id,full_name:name,phone,role:"passenger"});
+ }
+ if(!r.data.session)return msg("Account created. Check your email to confirm.");
+ user=r.data.user;await start();
+};
+
+$("forgot").onclick=async()=>{
+ let email=$("loginEmail").value.trim();
+ if(!email)return msg("Enter your email first.",true);
+ let r=await db.auth.resetPasswordForEmail(email,{redirectTo:location.href});
+ if(r.error)return msg(r.error.message,true);
+ msg("Password reset email sent.");
+};
+
+async function start(){
+ let p=await db.from("profiles").select("*").eq("id",user.id).maybeSingle();
+ if(p.data&&p.data.role!=="passenger"){
+  await db.auth.signOut();return msg("Passenger account required.",true);
+ }
+ $("auth").classList.add("hidden");$("passenger").classList.remove("hidden");$("logoutTop").classList.remove("hidden");
+ $("accountName").textContent=p.data?.full_name||user.user_metadata?.full_name||"Passenger";
+ $("accountPhone").textContent=p.data?.phone||user.user_metadata?.phone||"—";
+ $("accountEmail").textContent=user.email;
+ loadRide();
+}
+
+$("gps").onclick=()=>{
+ if(!navigator.geolocation)return toast("GPS is not supported.");
+ $("gps").textContent="...";
+ navigator.geolocation.getCurrentPosition(async p=>{
+  let lat=p.coords.latitude,lon=p.coords.longitude;
+  $("pickup").value=`${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+  $("gps").textContent="📍 GPS";
+  try{
+   let r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+   let d=await r.json();if(d.display_name)$("pickup").value=d.display_name;
+  }catch(e){}
+ },()=>{$("gps").textContent="📍 GPS";toast("Location permission denied.")});
+};
+
+document.querySelectorAll(".vehicle").forEach(v=>{
+ v.onclick=()=>{document.querySelectorAll(".vehicle").forEach(x=>x.classList.remove("active"));v.classList.add("active");updateFare()}
+});
+
+function updateFare(){
+ if(!distance)return;
+ let v=document.querySelector("[name=vehicle]:checked").value;
+ let f={bike:[25,14],car:[60,25],tuk_tuk:[45,18]}[v];
+ $("fare").textContent="NPR "+Math.round(f[0]+distance*f[1]);
+}
+
+async function route(){
+ let a=$("pickup").value.trim(),b=$("destination").value.trim();
+ if(!a||!b)return;
+ try{
+  let A=await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(a)}`).then(x=>x.json());
+  let B=await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(b)}`).then(x=>x.json());
+  if(!A[0]||!B[0])throw Error();
+  let R=await fetch(`https://router.project-osrm.org/route/v1/driving/${A[0].lon},${A[0].lat};${B[0].lon},${B[0].lat}?overview=false`).then(x=>x.json());
+  distance=R.routes?.[0]?.distance/1000||0;
+  $("distance").textContent=distance.toFixed(1)+" km";updateFare();
+ }catch(e){distance=0;$("distance").textContent="Unavailable";$("fare").textContent="—"}
+}
+$("destination").onblur=route;$("pickup").onblur=route;
+
+$("request").onclick=async()=>{
+ if(!user)return toast("Login first.");
+ await route();
+ if(!distance)return toast("Enter valid pickup and destination.");
+ let v=document.querySelector("[name=vehicle]:checked").value;
+ let f={bike:[25,14],car:[60,25],tuk_tuk:[45,18]}[v];
+ let fare=Math.round(f[0]+distance*f[1]);
+ let r=await db.from("rides").insert({
+  passenger_id:user.id,pickup_location:$("pickup").value,
+  destination:$("destination").value,vehicle_type:v,
+  distance_km:Number(distance.toFixed(2)),fare,status:"requested",
+  driver_earnings:0,admin_earnings:0
+ }).select().single();
+ if(r.error)return toast(r.error.message);
+ ride=r.data;showRide();toast("Ride requested.");
+};
+
+function showRide(){
+ $("rideCard").classList.remove("hidden");
+ $("rPickup").textContent=ride.pickup_location;
+ $("rDestination").textContent=ride.destination;
+ $("rVehicle").textContent=ride.vehicle_type;
+ $("rFare").textContent="NPR "+ride.fare;
+ $("rPayment").textContent=$("payment").value;
+ $("status").textContent=ride.status;
+}
+
+$("cancel").onclick=async()=>{
+ if(!ride)return;
+ if(!confirm("Cancel this ride?"))return;
+ let r=await db.from("rides").update({status:"cancelled"}).eq("id",ride.id).select().single();
+ if(r.error)return toast(r.error.message);
+ ride=r.data;showRide();toast("Ride cancelled.");
+};
+
+$("track").onclick=()=>{$("trackCard").classList.remove("hidden")};
+$("closeTrack").onclick=()=>{$("trackCard").classList.add("hidden")};
+$("sos").onclick=()=>{if(confirm("Call emergency police service 100?"))location.href="tel:100"};
+
+async function loadRide(){
+ let r=await db.from("rides").select("*").eq("passenger_id",user.id)
+ .in("status",["requested","accepted","arriving","started"])
+ .order("created_at",{ascending:false}).limit(1).maybeSingle();
+ if(r.data){ride=r.data;showRide();listen()}
+}
+
+function listen(){
+ db.channel("ride-"+ride.id).on("postgres_changes",
+ {event:"UPDATE",schema:"public",table:"rides",filter:"id=eq."+ride.id},
+ p=>{ride=p.new;showRide()}).subscribe();
+}
+
+async function logout(){
+ await db.auth.signOut();location.reload();
+}
+$("logout").onclick=logout;$("logoutTop").onclick=logout;
+
+db.auth.getSession().then(async r=>{
+ if(r.data.session){user=r.data.session.user;await start()}
+});
+</script>
+</body>
+  </html>
