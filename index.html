@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WWII Arena</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#171713;overflow:hidden;font-family:Arial;color:#fff}
+#game{position:relative;width:100vw;height:100vh;background:#4c4a36;overflow:hidden}
+#map{position:absolute;width:1400px;height:850px;
+background:
+radial-gradient(circle,#69664b 0 3px,transparent 4px) 0 0/35px 35px,
+#55513b}
+.trench{position:absolute;background:#292821;border:8px solid #77704f;box-shadow:inset 0 0 25px #000}
+.sandbag{position:absolute;background:#a39468;border:3px solid #665d40;border-radius:8px}
+.box{position:absolute;background:#59432d;border:5px solid #38291e}
+.barbed{position:absolute;color:#222;font-size:35px}
+#hud{position:fixed;z-index:20;top:10px;left:10px;right:10px;
+display:flex;justify-content:space-between;pointer-events:none}
+.panel{background:#111c;padding:8px 14px;border:1px solid #aaa6;border-radius:8px}
+#message{position:fixed;z-index:30;left:50%;top:15%;
+transform:translateX(-50%);font-size:34px;font-weight:bold;
+text-shadow:3px 3px #000;display:none}
+.player{position:absolute;width:38px;height:38px;border-radius:50%;
+border:4px solid #ddd;z-index:10}
+#p1{background:#315d36}
+#p2{background:#713737}
+.gun{position:absolute;width:25px;height:7px;background:#222;
+top:15px;left:27px;border-radius:4px;transform-origin:left}
+.bullet{position:absolute;width:9px;height:4px;background:#ffd86b;
+border-radius:4px;z-index:15}
+.explosion{position:absolute;width:80px;height:80px;border-radius:50%;
+background:radial-gradient(circle,#fff,#ff9d18,#6e1c00,transparent);
+z-index:14;animation:boom .35s forwards}
+@keyframes boom{to{transform:scale(1.7);opacity:0}}
+button{padding:14px 25px;font-size:18px;font-weight:bold}
+#start{position:fixed;z-index:50;inset:0;background:#000b;
+display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center}
+h1{font-size:48px;margin:5px;text-shadow:4px 4px #000}
+small{color:#ccc;margin:15px}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+<div id="map">
+
+<div class="trench" style="left:450px;top:180px;width:500px;height:100px"></div>
+<div class="trench" style="left:450px;top:570px;width:500px;height:100px"></div>
+
+<div class="sandbag" style="left:250px;top:350px;width:180px;height:35px"></div>
+<div class="sandbag" style="left:970px;top:350px;width:180px;height:35px"></div>
+<div class="sandbag" style="left:620px;top:330px;width:160px;height:35px"></div>
+
+<div class="box" style="left:330px;top:120px;width:70px;height:70px"></div>
+<div class="box" style="left:1000px;top:650px;width:70px;height:70px"></div>
+<div class="box" style="left:1080px;top:120px;width:80px;height:60px"></div>
+<div class="box" style="left:250px;top:650px;width:80px;height:60px"></div>
+
+<div class="barbed" style="left:100px;top:250px">⚒ ⚒ ⚒</div>
+<div class="barbed" style="left:1100px;top:480px">⚒ ⚒ ⚒</div>
+
+<div id="p1" class="player">
+<div class="gun"></div>
+</div>
+
+<div id="p2" class="player">
+<div class="gun"></div>
+</div>
+
+</div>
+
+<div id="hud">
+<div class="panel">
+🟢 P1 HP: <b id="hp1">100</b>
+&nbsp; Kills: <b id="k1">0</b>
+</div>
+<div class="panel">
+🔴 P2 HP: <b id="hp2">100</b>
+&nbsp; Kills: <b id="k2">0</b>
+</div>
+</div>
+
+<div id="message"></div>
+
+<div id="start">
+<h1>⚔ WWII ARENA</h1>
+<p>Original WWII-style local PvP shooter</p>
+<small>
+P1: WASD • F Shoot • G Grenade<br>
+P2: Arrow Keys • L Shoot • K Grenade
+</small>
+<button onclick="startGame()">START BATTLE</button>
+</div>
+
+</div>
+
+<script>
+
+const map=document.getElementById("map");
+const p1=document.getElementById("p1");
+const p2=document.getElementById("p2");
+
+let keys={};
+let bullets=[];
+let grenades=[];
+let running=false;
+
+const players={
+p1:{
+el:p1,x:180,y:400,hp:100,kills:0,
+color:"green",dir:{x:1,y:0},
+cool:0,grenade:0
+},
+p2:{
+el:p2,x:1180,y:400,hp:100,kills:0,
+color:"red",dir:{x:-1,y:0},
+cool:0,grenade:0
+}
+};
+
+const obstacles=[
+{x:450,y:180,w:500,h:100},
+{x:450,y:570,w:500,h:100},
+{x:250,y:350,w:180,h:35},
+{x:970,y:350,w:180,h:35},
+{x:620,y:330,w:160,h:35},
+{x:330,y:120,w:70,h:70},
+{x:1000,y:650,w:70,h:70},
+{x:1080,y:120,w:80,h:60},
+{x:250,y:650,w:80,h:60}
+];
+
+document.addEventListener("keydown",e=>{
+keys[e.key.toLowerCase()]=true;
+});
+
+document.addEventListener("keyup",e=>{
+keys[e.key.toLowerCase()]=false;
+});
+
+function startGame(){
+
+document.getElementById("start").style.display="none";
+
+players.p1.x=180;
+players.p1.y=400;
+players.p2.x=1180;
+players.p2.y=400;
+
+players.p1.hp=100;
+players.p2.hp=100;
+
+players.p1.kills=0;
+players.p2.kills=0;
+
+running=true;
+
+requestAnimationFrame(loop);
+
+}
+
+function blocked(x,y){
+
+if(x<20||y<20||x>1360||y>810)return true;
+
+for(let o of obstacles){
+
+if(
+x+15>o.x &&
+x-15<o.x+o.w &&
+y+15>o.y &&
+y-15<o.y+o.h
+)return true;
+
+}
+
+return false;
+}
+
+function move(p,dx,dy){
+
+let nx=p.x+dx;
+let ny=p.y+dy;
+
+if(!blocked(nx,ny)){
+p.x=nx;
+p.y=ny;
+}
+
+if(dx||dy){
+
+p.dir.x=dx;
+p.dir.y=dy;
+
+}
+
+}
+
+function shoot(p,enemy){
+
+if(p.cool>0)return;
+
+p.cool=18;
+
+let angle=Math.atan2(
+enemy.y-p.y,
+enemy.x-p.x
+);
+
+let b={
+x:p.x,
+y:p.y,
+vx:Math.cos(angle)*12,
+vy:Math.sin(angle)*12,
+owner:p
+};
+
+bullets.push(b);
+
+}
+
+function grenade(p,enemy){
+
+if(p.grenade>0)return;
+
+p.grenade=100;
+
+grenades.push({
+x:p.x,
+y:p.y,
+tx:enemy.x,
+ty:enemy.y,
+timer:55,
+owner:p
+});
+
+}
+
+function damage(enemy,amount,owner){
+
+enemy.hp-=amount;
+
+if(enemy.hp<=0){
+
+owner.kills++;
+
+respawn(enemy);
+
+}
+
+}
+
+function respawn(p){
+
+p.hp=100;
+
+if(p===players.p1){
+p.x=180;
+p.y=400;
+}else{
+p.x=1180;
+p.y=400;
+}
+
+}
+
+function explosion(x,y,owner){
+
+let e=document.createElement("div");
+
+e.className="explosion";
+
+e.style.left=(x-40)+"px";
+e.style.top=(y-40)+"px";
+
+map.appendChild(e);
+
+setTimeout(()=>e.remove(),400);
+
+let target=
+owner===players.p1?players.p2:players.p1;
+
+let d=Math.hypot(target.x-x,target.y-y);
+
+if(d<120){
+
+damage(
+target,
+Math.max(10,80-d*.5),
+owner
+);
+
+}
+
+}
+
+function updateBullets(){
+
+bullets.forEach((b,i)=>{
+
+b.x+=b.vx;
+b.y+=b.vy;
+
+let div=document.createElement("div");
+
+div.className="bullet";
+
+div.style.left=b.x+"px";
+div.style.top=b.y+"px";
+
+map.appendChild(div);
+
+setTimeout(()=>div.remove(),30);
+
+let target=
+b.owner===players.p1?players.p2:players.p1;
+
+if(Math.hypot(target.x-b.x,target.y-b.y)<25){
+
+damage(target,25,b.owner);
+
+bullets.splice(i,1);
+
+}
+
+if(
+b.x<0||b.y<0||
+b.x>1400||b.y>850
+){
+
+bullets.splice(i,1);
+
+}
+
+});
+
+}
+
+function updateGrenades(){
+
+grenades.forEach((g,i)=>{
+
+g.timer--;
+
+if(g.timer<=0){
+
+explosion(g.tx,g.ty,g.owner);
+
+grenades.splice(i,1);
+
+}
+
+});
+
+}
+
+function updatePlayer(p){
+
+let dx=0;
+let dy=0;
+
+if(p===players.p1){
+
+if(keys["w"])dy=-1;
+if(keys["s"])dy=1;
+if(keys["a"])dx=-1;
+if(keys["d"])dx=1;
+
+if(keys["f"])
+shoot(p,players.p2);
+
+if(keys["g"])
+grenade(p,players.p2);
+
+}else{
+
+if(keys["arrowup"])dy=-1;
+if(keys["arrowdown"])dy=1;
+if(keys["arrowleft"])dx=-1;
+if(keys["arrowright"])dx=1;
+
+if(keys["l"])
+shoot(p,players.p1);
+
+if(keys["k"])
+grenade(p,players.p1);
+
+}
+
+let speed=4;
+
+if(dx&&dy)speed*=.7;
+
+move(p,dx*speed,dy*speed);
+
+if(p.cool>0)p.cool--;
+if(p.grenade>0)p.grenade--;
+
+p.el.style.left=(p.x-19)+"px";
+p.el.style.top=(p.y-19)+"px";
+
+}
+
+function updateHUD(){
+
+document.getElementById("hp1").textContent=
+Math.max(0,Math.floor(players.p1.hp));
+
+document.getElementById("hp2").textContent=
+Math.max(0,Math.floor(players.p2.hp));
+
+document.getElementById("k1").textContent=
+players.p1.kills;
+
+document.getElementById("k2").textContent=
+players.p2.kills;
+
+}
+
+function loop(){
+
+if(!running)return;
+
+updatePlayer(players.p1);
+updatePlayer(players.p2);
+
+updateBullets();
+updateGrenades();
+updateHUD();
+
+requestAnimationFrame(loop);
+
+}
+
+</script>
+
+</body>
+  </html>
