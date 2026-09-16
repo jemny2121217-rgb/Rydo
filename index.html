@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>WWII Frontline</title>
+
+<style>
+*{box-sizing:border-box}
+html,body{
+ margin:0;width:100%;height:100%;overflow:hidden;
+ background:#151510;font-family:Arial;color:white;
+ touch-action:none
+}
+#game{
+ position:relative;width:100%;height:100%;
+ overflow:hidden;background:#5c5a43
+}
+canvas{
+ position:absolute;inset:0;width:100%;height:100%;
+ display:block
+}
+#hud{
+ position:absolute;top:10px;left:10px;right:10px;
+ display:flex;justify-content:space-between;
+ z-index:5;pointer-events:none
+}
+.box{
+ background:#000b;border:1px solid #ffffff44;
+ padding:8px 12px;border-radius:10px;
+ font-weight:bold
+}
+#cross{
+ position:absolute;z-index:6;
+ width:25px;height:25px;
+ transform:translate(-50%,-50%);
+ pointer-events:none;display:none
+}
+#cross:before,#cross:after{
+ content:"";position:absolute;background:white
+}
+#cross:before{width:25px;height:2px;top:11px}
+#cross:after{height:25px;width:2px;left:11px}
+#controls{
+ position:absolute;z-index:10;left:0;right:0;bottom:18px;
+ display:flex;justify-content:space-between;
+ padding:0 18px;pointer-events:none
+}
+.pad{
+ display:grid;grid-template-columns:55px 55px 55px;
+ grid-template-rows:55px 55px 55px;
+ gap:5px;pointer-events:auto
+}
+.ctrl{
+ width:55px;height:55px;border:0;border-radius:12px;
+ background:#111c;color:white;font-size:23px;
+ border:1px solid #ffffff55
+}
+.up{grid-column:2}
+.left{grid-column:1;grid-row:2}
+.down{grid-column:2;grid-row:2}
+.right{grid-column:3;grid-row:2}
+.actions{
+ display:flex;gap:10px;align-items:end;
+ pointer-events:auto
+}
+.action{
+ width:72px;height:72px;border-radius:50%;
+ border:2px solid #ffffff55;background:#8b2929dd;
+ color:white;font-weight:bold
+}
+.reload{background:#315f35dd}
+#screen{
+ position:absolute;z-index:20;inset:0;
+ background:#000b;display:flex;
+ align-items:center;justify-content:center;
+ flex-direction:column;text-align:center
+}
+#screen h1{
+ font-size:42px;margin:0 0 5px;
+ text-shadow:3px 3px #000
+}
+#screen p{color:#ddd;margin:8px 20px 22px}
+.start{
+ border:0;border-radius:12px;padding:15px 30px;
+ background:#b28a45;color:white;
+ font-size:18px;font-weight:bold
+}
+.hidden{display:none!important}
+#notice{
+ position:absolute;z-index:8;top:75px;left:50%;
+ transform:translateX(-50%);
+ font-weight:bold;font-size:22px;
+ text-shadow:2px 2px #000;pointer-events:none
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+<canvas id="canvas"></canvas>
+
+<div id="hud">
+ <div class="box">❤️ <span id="hp">100</span></div>
+ <div class="box">🎯 <span id="score">0</span></div>
+ <div class="box">🔫 <span id="ammo">12</span>/12</div>
+</div>
+
+<div id="cross"></div>
+<div id="notice"></div>
+
+<div id="controls">
+
+ <div class="pad">
+  <button class="ctrl up" data-key="w">▲</button>
+  <button class="ctrl left" data-key="a">◀</button>
+  <button class="ctrl down" data-key="s">▼</button>
+  <button class="ctrl right" data-key="d">▶</button>
+ </div>
+
+ <div class="actions">
+  <button class="action reload" id="reload">RELOAD</button>
+  <button class="action" id="shoot">FIRE</button>
+ </div>
+
+</div>
+
+<div id="screen">
+ <h1>WWII FRONTLINE</h1>
+ <p>
+  Defend the battlefield.<br>
+  Move, aim, shoot and survive.
+ </p>
+ <button class="start" id="start">START BATTLE</button>
+</div>
+
+</div>
+
+<script>
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+
+let W=0,H=0;
+let running=false;
+let keys={};
+let bullets=[];
+let enemies=[];
+let particles=[];
+let score=0;
+let last=0;
+let spawnTimer=0;
+let fireTimer=0;
+let reloadTimer=0;
+
+const player={
+ x:0,y:0,r:20,
+ speed:230,
+ hp:100,
+ ammo:12,
+ maxAmmo:12,
+ angle:0
+};
+
+const mouse={
+ x:0,y:0,
+ down:false
+};
+
+function resize(){
+ W=canvas.width=innerWidth;
+ H=canvas.height=innerHeight;
+
+ if(!running){
+  player.x=W/2;
+  player.y=H/2;
+ }
+}
+resize();
+addEventListener("resize",resize);
+
+
+/* START */
+
+document.getElementById("start").onclick=startGame;
+
+function startGame(){
+
+ running=true;
+ score=0;
+ bullets=[];
+ enemies=[];
+ particles=[];
+
+ player.x=W/2;
+ player.y=H/2;
+ player.hp=100;
+ player.ammo=12;
+
+ document.getElementById("screen").classList.add("hidden");
+
+ document.getElementById("cross").style.display="block";
+
+ last=performance.now();
+
+ requestAnimationFrame(loop);
+}
+
+
+/* KEYBOARD */
+
+addEventListener("keydown",e=>{
+ keys[e.key.toLowerCase()]=true;
+
+ if(e.key.toLowerCase()==="r"){
+  reload();
+ }
+
+ if(e.code==="Space"){
+  shoot();
+ }
+});
+
+addEventListener("keyup",e=>{
+ keys[e.key.toLowerCase()]=false;
+});
+
+
+/* MOBILE BUTTONS */
+
+document.querySelectorAll("[data-key]").forEach(btn=>{
+
+ const key=btn.dataset.key;
+
+ btn.addEventListener("pointerdown",e=>{
+  e.preventDefault();
+  keys[key]=true;
+ });
+
+ btn.addEventListener("pointerup",e=>{
+  e.preventDefault();
+  keys[key]=false;
+ });
+
+ btn.addEventListener("pointercancel",()=>{
+  keys[key]=false;
+ });
+
+});
+
+
+/* FIRE BUTTON */
+
+const shootButton=document.getElementById("shoot");
+
+shootButton.addEventListener("pointerdown",e=>{
+ e.preventDefault();
+ mouse.down=true;
+ shoot();
+});
+
+shootButton.addEventListener("pointerup",()=>{
+ mouse.down=false;
+});
+
+shootButton.addEventListener("pointercancel",()=>{
+ mouse.down=false;
+});
+
+
+/* RELOAD */
+
+document.getElementById("reload").onclick=reload;
+
+
+/* MOUSE */
+
+canvas.addEventListener("pointermove",e=>{
+ mouse.x=e.clientX;
+ mouse.y=e.clientY;
+});
+
+canvas.addEventListener("pointerdown",e=>{
+ if(e.pointerType==="mouse"){
+  mouse.down=true;
+  mouse.x=e.clientX;
+  mouse.y=e.clientY;
+  shoot();
+ }
+});
+
+canvas.addEventListener("pointerup",e=>{
+ if(e.pointerType==="mouse"){
+  mouse.down=false;
+ }
+});
+
+
+/* SHOOT */
+
+function shoot(){
+
+ if(!running)return;
+ if(reloadTimer>0)return;
+ if(fireTimer>0)return;
+
+ if(player.ammo<=0){
+  reload();
+  return;
+ }
+
+ let angle=player.angle;
+
+ bullets.push({
+  x:player.x+Math.cos(angle)*25,
+  y:player.y+Math.sin(angle)*25,
+  vx:Math.cos(angle)*700,
+  vy:Math.sin(angle)*700,
+  life:1
+ });
+
+ player.ammo--;
+
+ fireTimer=.18;
+
+ muzzleFlash(
+  player.x+Math.cos(angle)*30,
+  player.y+Math.sin(angle)*30
+ );
+}
+
+
+/* RELOAD */
+
+function reload(){
+
+ if(!running)return;
+ if(reloadTimer>0)return;
+ if(player.ammo===player.maxAmmo)return;
+
+ reloadTimer=1.2;
+
+ showNotice("RELOADING...");
+
+}
+
+
+/* NOTICE */
+
+let noticeTimer=0;
+
+function showNotice(text){
+
+ document.getElementById("notice").textContent=text;
+ noticeTimer=1;
+}
+
+
+/* SPAWN ENEMY */
+
+function spawnEnemy(){
+
+ let side=Math.floor(Math.random()*4);
+ let x,y;
+
+ if(side===0){
+  x=-30;y=Math.random()*H;
+ }
+ else if(side===1){
+  x=W+30;y=Math.random()*H;
+ }
+ else if(side===2){
+  x=Math.random()*W;y=-30;
+ }
+ else{
+  x=Math.random()*W;y=H+30;
+ }
+
+ enemies.push({
+  x:x,y:y,r:19,
+  hp:50,
+  speed:65+Math.random()*35,
+  hit:0
+ });
+}
+
+
+/* PARTICLES */
+
+function muzzleFlash(x,y){
+
+ for(let i=0;i<5;i++){
+
+  particles.push({
+   x:x,y:y,
+   vx:(Math.random()-.5)*150,
+   vy:(Math.random()-.5)*150,
+   life:.2,
+   size:4
+  });
+
+ }
+}
+
+
+/* UPDATE */
+
+function update(dt){
+
+ if(fireTimer>0)fireTimer-=dt;
+
+ if(noticeTimer>0){
+  noticeTimer-=dt;
+
+  if(noticeTimer<=0)
+   document.getElementById("notice").textContent="";
+ }
+
+ if(reloadTimer>0){
+
+  reloadTimer-=dt;
+
+  if(reloadTimer<=0){
+   player.ammo=player.maxAmmo;
+   showNotice("READY!");
+  }
+
+ }
+
+
+ /* MOVEMENT */
+
+ let dx=0,dy=0;
+
+ if(keys.w)dy--;
+ if(keys.s)dy++;
+ if(keys.a)dx--;
+ if(keys.d)dx++;
+
+ if(dx||dy){
+
+  let length=Math.hypot(dx,dy);
+
+  dx/=length;
+  dy/=length;
+
+  player.x+=dx*player.speed*dt;
+  player.y+=dy*player.speed*dt;
+ }
+
+ player.x=Math.max(25,Math.min(W-25,player.x));
+ player.y=Math.max(25,Math.min(H-25,player.y));
+
+
+ /* AIM */
+
+ if(mouse.x||mouse.y){
+  player.angle=Math.atan2(
+   mouse.y-player.y,
+   mouse.x-player.x
+  );
+ }
+
+
+ /* CONTINUOUS FIRE */
+
+ if(mouse.down){
+  shoot();
+ }
+
+
+ /* SPAWN */
+
+ spawnTimer+=dt;
+
+ if(spawnTimer>1.2){
+
+  spawnTimer=0;
+  spawnEnemy();
+
+ }
+
+
+ /* BULLETS */
+
+ bullets.forEach((b,i)=>{
+
+  b.x+=b.vx*dt;
+  b.y+=b.vy*dt;
+  b.life-=dt;
+
+  for(let j=enemies.length-1;j>=0;j--){
+
+   let e=enemies[j];
+
+   if(Math.hypot(e.x-b.x,e.y-b.y)<e.r+5){
+
+    e.hp-=25;
+    b.life=0;
+
+    if(e.hp<=0){
+
+     score+=100;
+
+     burst(e.x,e.y);
+
+     enemies.splice(j,1);
+    }
+
+    break;
+   }
+  }
+
+  if(
+   b.life<=0||
+   b.x<0||b.x>W||
+   b.y<0||b.y>H
+  ){
+   bullets.splice(i,1);
+  }
+
+ });
+
+
+ /* ENEMIES */
+
+ enemies.forEach(e=>{
+
+  let angle=Math.atan2(
+   player.y-e.y,
+   player.x-e.x
+  );
+
+  e.x+=Math.cos(angle)*e.speed*dt;
+  e.y+=Math.sin(angle)*e.speed*dt;
+
+  if(Math.hypot(
+   player.x-e.x,
+   player.y-e.y
+  )<player.r+e.r){
+
+   player.hp-=25*dt;
+
+   e.hit=.1;
+  }
+
+ });
+
+
+ /* PARTICLES */
+
+ particles.forEach((p,i)=>{
+
+  p.x+=p.vx*dt;
+  p.y+=p.vy*dt;
+  p.life-=dt;
+
+  if(p.life<=0)
+   particles.splice(i,1);
+
+ });
+
+
+ if(player.hp<=0){
+  gameOver();
+ }
+
+}
+
+
+/* EXPLOSION */
+
+function burst(x,y){
+
+ for(let i=0;i<18;i++){
+
+  let a=Math.random()*Math.PI*2;
+  let s=60+Math.random()*180;
+
+  particles.push({
+   x:x,y:y,
+   vx:Math.cos(a)*s,
+   vy:Math.sin(a)*s,
+   life:.5+Math.random()*.4,
+   size:3+Math.random()*5
+  });
+
+ }
+}
+
+
+/* DRAW */
+
+function draw(){
+
+ ctx.clearRect(0,0,W,H);
+
+ drawGround();
+ drawCover();
+
+ bullets.forEach(drawBullet);
+
+ enemies.forEach(drawEnemy);
+
+ drawPlayer();
+
+ particles.forEach(drawParticle);
+
+ updateHUD();
+}
+
+
+/* GROUND */
+
+function drawGround(){
+
+ ctx.fillStyle="#5b5941";
+ ctx.fillRect(0,0,W,H);
+
+ /* dirt */
+
+ ctx.fillStyle="#4d4a36";
+
+ for(let i=0;i<100;i++){
+
+  let x=(i*97)%W;
+  let y=(i*61)%H;
+
+  ctx.fillRect(x,y,3,3);
+ }
+
+
+ /* trench */
+
+ ctx.fillStyle="#302e24";
+
+ ctx.fillRect(
+  W*.05,H*.18,
+  W*.9,70
+ );
+
+ ctx.fillRect(
+  W*.05,H*.70,
+  W*.9,70
+ );
+
+}
+
+
+/* COVER */
+
+function drawCover(){
+
+ function sandbag(x,y,w){
+
+  for(let i=0;i<w;i+=30){
+
+   ctx.fillStyle="#a08e60";
+
+   ctx.beginPath();
+   ctx.roundRect(x+i,y,28,18,5);
+   ctx.fill();
+
+   ctx.strokeStyle="#66583b";
+   ctx.stroke();
+
+  }
+
+ }
+
+ sandbag(W*.1,H*.48,W*.28);
+ sandbag(W*.62,H*.48,W*.28);
+
+ /* boxes */
+
+ ctx.fillStyle="#60482f";
+
+ ctx.fillRect(W*.35,H*.32,55,55);
+ ctx.fillRect(W*.61,H*.32,55,55);
+}
+
+
+/* PLAYER */
+
+function drawPlayer(){
+
+ ctx.save();
+
+ ctx.translate(player.x,player.y);
+
+ /* shadow */
+
+ ctx.fillStyle="#0006";
+ ctx.beginPath();
+ ctx.ellipse(0,17,22,8,0,0,Math.PI*2);
+ ctx.fill();
+
+ /* body */
+
+ ctx.fillStyle="#405b3c";
+ ctx.beginPath();
+ ctx.arc(0,3,17,0,Math.PI*2);
+ ctx.fill();
+
+ /* helmet */
+
+ ctx.fillStyle="#293b28";
+ ctx.beginPath();
+ ctx.arc(0,-8,14,Math.PI,Math.PI*2);
+ ctx.fill();
+
+ ctx.fillRect(-17,-8,34,5);
+
+ /* face */
+
+ ctx.fillStyle="#c08b68";
+ ctx.beginPath();
+ ctx.arc(0,-2,9,0,Math.PI*2);
+ ctx.fill();
+
+ /* rifle */
+
+ ctx.rotate(player.angle);
+
+ ctx.fillStyle="#171512";
+ ctx.fillRect(5,-3,34,6);
+
+ ctx.fillStyle="#6b452a";
+ ctx.fillRect(7,-2,18,4);
+
+ ctx.restore();
+}
+
+
+/* ENEMY */
+
+function drawEnemy(e){
+
+ ctx.save();
+ ctx.translate(e.x,e.y);
+
+ ctx.fillStyle="#0006";
+ ctx.beginPath();
+ ctx.ellipse(0,17,22,8,0,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.fillStyle="#673b35";
+ ctx.beginPath();
+ ctx.arc(0,3,17,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.fillStyle="#362521";
+ ctx.beginPath();
+ ctx.arc(0,-8,14,Math.PI,Math.PI*2);
+ ctx.fill();
+
+ ctx.fillRect(-17,-8,34,5);
+
+ ctx.fillStyle="#c08b68";
+ ctx.beginPath();
+ ctx.arc(0,-2,9,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.restore();
+
+ /* health bar */
+
+ ctx.fillStyle="#300";
+ ctx.fillRect(e.x-20,e.y-30,40,5);
+
+ ctx.fillStyle="#e33";
+ ctx.fillRect(
+  e.x-20,e.y-30,
+  40*(e.hp/50),5
+ );
+
+}
+
+
+/* BULLET */
+
+function drawBullet(b){
+
+ ctx.fillStyle="#ffd45a";
+
+ ctx.beginPath();
+ ctx.arc(b.x,b.y,3,0,Math.PI*2);
+ ctx.fill();
+}
+
+
+/* PARTICLE */
+
+function drawParticle(p){
+
+ ctx.globalAlpha=Math.max(0,p.life);
+
+ ctx.fillStyle="#e7a23b";
+
+ ctx.beginPath();
+ ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.globalAlpha=1;
+}
+
+
+/* HUD */
+
+function updateHUD(){
+
+ document.getElementById("hp").textContent=
+ Math.max(0,Math.ceil(player.hp));
+
+ document.getElementById("ammo").textContent=
+ player.ammo;
+
+ document.getElementById("score").textContent=
+ score;
+
+}
+
+
+/* GAME OVER */
+
+function gameOver(){
+
+ running=false;
+
+ document.getElementById("cross").style.display="none";
+
+ document.getElementById("screen").classList.remove("hidden");
+
+ document.querySelector("#screen h1").textContent="MISSION FAILED";
+
+ document.querySelector("#screen p").innerHTML=
+ "Score: <b>"+score+
+ "</b><br><br>Tap below to fight again.";
+
+ document.getElementById("start").textContent="PLAY AGAIN";
+}
+
+
+/* LOOP */
+
+function loop(time){
+
+ if(!running)return;
+
+ let dt=Math.min(
+  (time-last)/1000,
+  .05
+ );
+
+ last=time;
+
+ update(dt);
+ draw();
+
+ requestAnimationFrame(loop);
+}
+
+</script>
+
+</body>
+</html>
+
+What you should see
+
+When you open it, you'll get WWII FRONTLINE → START BATTLE.
+
+After pressing START BATTLE:
+
+- 🪖 Your soldier appears in the middle.
+- 🔴 Enemy soldiers continuously approach.
+- 🎯 Aim toward the enemy.
+- 🔫 FIRE shoots.
+- 🔄 RELOAD restores ammunition.
+- ❤️ Your health decreases when enemies reach you.
+- 🎯 Killing enemies increases your score.
+- 💥 Enemies produce explosion particles when killed.
+- 💀 When health reaches zero, MISSION FAILED appears.
+- 🔁 PLAY AGAIN starts another match.
+
+This is still a single-player enemy-shooter, not true online PvP yet. Once this base is working on your phone, the next step is to add the actual two-player online connection rather than pretending local buttons are online multiplayer.
